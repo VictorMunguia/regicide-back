@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.panda.regicide.dtos.PaginationResponse;
 import com.panda.regicide.dtos.RoomDTO;
 import com.panda.regicide.models.*;
+import com.panda.regicide.util.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class SocketEventHandler {
+    private static final Logger logger = LoggerFactory.getLogger(SocketEventHandler.class);
 
     private final SocketIOServer server;
 
@@ -111,8 +115,10 @@ public class SocketEventHandler {
                 })
                 .collect(Collectors.toList());
 
-        client.sendEvent("updateRooms", new PaginationResponse(roomsResponse, String.valueOf(totalRooms),
-                String.valueOf(totalPages), String.valueOf(page)));
+        PaginationResponse response = new PaginationResponse(roomsResponse, String.valueOf(totalRooms),
+                String.valueOf(totalPages), String.valueOf(page));
+        logger.info("updateRooms response: " + JsonUtils.convertObjectToString(response));
+        client.sendEvent("updateRooms", response);
     }
 
     private List<String> paginateList(List<String> list, int page, int size) {
