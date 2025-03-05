@@ -9,12 +9,15 @@ import java.util.List;
 public class Room {
     private String roomName;
     private List<Player> players = new ArrayList<>();
+    private int maxPlayerNumber;
     private boolean gameStarted = false;
     private GameBoard gameBoard = new GameBoard();
     private int turnIndex = 0;
     private String roomOwner;
+    private String lives;
+    private String handCards;
+    private boolean randomBosses;
 
-    public Room() {}
     public Room(String roomName) {
         this.roomName = roomName;
     }

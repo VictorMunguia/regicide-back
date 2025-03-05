@@ -4,12 +4,15 @@ import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.panda.regicide.dtos.PaginationResponse;
+import com.panda.regicide.dtos.RoomDTO;
 import com.panda.regicide.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class SocketEventHandler {
@@ -82,6 +85,7 @@ public class SocketEventHandler {
         }
 
         Room newRoom = new Room(roomName);
+        newRoom.setMaxPlayerNumber(5);//  by default for now, front end will send this info later
         rooms.put(roomName, newRoom);
 
         client.sendEvent("roomResponse", Map.of("success", true, "message", "Sala creada"));
@@ -89,23 +93,32 @@ public class SocketEventHandler {
     }
 
     private void handleGetRooms(SocketIOClient client, PaginationRequest paginationRequest) {
-        List<String> roomNames = new ArrayList<>(rooms.keySet());
-
         int page = Integer.parseInt(paginationRequest.getPage());
         int size = Integer.parseInt(paginationRequest.getSize());
+
+        List<String> roomNames = new ArrayList<>(rooms.keySet());
         int totalRooms = roomNames.size();
         int totalPages = (int) Math.ceil((double) totalRooms / size);
 
-        if (page < 1) page = 1;
-        if (page > totalPages) page = totalPages;
+        page = Math.max(1, Math.min(page, totalPages));
 
-        int fromIndex = (page - 1) * size;
-        int toIndex = Math.min(fromIndex + size, totalRooms);
+        List<String> paginatedRoomNames = paginateList(roomNames, page, size);
+        List<RoomDTO> roomsResponse = paginatedRoomNames.stream()
+                .map(roomName -> {
+                    Room room = rooms.get(roomName);
+                    return new RoomDTO(room.getRoomName(), String.valueOf(room.getPlayers().size()),
+                            String.valueOf(room.getMaxPlayerNumber()));
+                })
+                .collect(Collectors.toList());
 
-        List<String> paginatedRooms = roomNames.subList(fromIndex, toIndex);
-
-        client.sendEvent("updateRooms", new PaginationResponse(paginatedRooms, String.valueOf(totalRooms),
+        client.sendEvent("updateRooms", new PaginationResponse(roomsResponse, String.valueOf(totalRooms),
                 String.valueOf(totalPages), String.valueOf(page)));
+    }
+
+    private List<String> paginateList(List<String> list, int page, int size) {
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, list.size());
+        return list.subList(fromIndex, toIndex);
     }
 
     private void handleJoinRoom(SocketIOClient client, String roomName, AckRequest ack) {
