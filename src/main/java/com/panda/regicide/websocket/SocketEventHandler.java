@@ -52,8 +52,8 @@ public class SocketEventHandler {
             handleCreateRoom(client, roomName, ackRequest);
         });
 
-        this.server.addEventListener("getRooms", Object.class, (client, data, ackRequest) -> {
-            handleGetRooms(client);
+        this.server.addEventListener("getRooms", PaginationRequest.class, (client, paginationRequest, ackRequest) -> {
+            handleGetRooms(client, paginationRequest);
         });
 
         this.server.addEventListener("joinRoom", String.class, (client, roomName, ackRequest) -> {
@@ -88,9 +88,24 @@ public class SocketEventHandler {
         broadcastRooms();
     }
 
-    private void handleGetRooms(SocketIOClient client) {
+    private void handleGetRooms(SocketIOClient client, PaginationRequest paginationRequest) {
         List<String> roomNames = new ArrayList<>(rooms.keySet());
-        client.sendEvent("updateRooms", roomNames);
+
+        int page = Integer.parseInt(paginationRequest.getPage());
+        int size = Integer.parseInt(paginationRequest.getSize());
+        int totalRooms = roomNames.size();
+        int totalPages = (int) Math.ceil((double) totalRooms / size);
+
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, totalRooms);
+
+        List<String> paginatedRooms = roomNames.subList(fromIndex, toIndex);
+
+        client.sendEvent("updateRooms", new PaginationResponse(paginatedRooms, String.valueOf(totalRooms),
+                String.valueOf(totalPages), String.valueOf(page)));
     }
 
     private void handleJoinRoom(SocketIOClient client, String roomName, AckRequest ack) {
