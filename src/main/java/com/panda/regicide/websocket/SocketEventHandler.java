@@ -85,6 +85,7 @@ public class SocketEventHandler {
         System.out.println(">>> createRoom: " + roomName);
 
         if (rooms.containsKey(roomName)) {
+            logger.info("Ejecutando el ack");
             ack.sendAckData(Map.of("success", true, "message", "Sala creada"));
             return;
         }
