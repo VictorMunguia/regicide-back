@@ -44,7 +44,7 @@ public class SocketEventHandler {
             // Eliminar de las rooms
             rooms.forEach((roomName, room) -> {
                 room.getPlayers().removeIf(p -> p.getId().equals(client.getSessionId().toString()));
-                // Si la sala queda vacía, se borra
+                // Si la room queda vacía, se borra
                 if (room.getPlayers().isEmpty()) {
                     rooms.remove(roomName);
                 } else {
@@ -55,8 +55,8 @@ public class SocketEventHandler {
         });
 
         // Registramos los listeners para los eventos igual que en Node:
-        this.server.addEventListener("createRoom", String.class, (client, roomName, ackRequest) -> {
-            handleCreateRoom(client, roomName, ackRequest);
+        this.server.addEventListener("createRoom", CreateRoomRequest.class, (client, createRoomRequest, ackRequest) -> {
+            handleCreateRoom(client, createRoomRequest, ackRequest);
         });
 
         this.server.addEventListener("getRooms", PaginationRequest.class, (client, paginationRequest, ackRequest) -> {
@@ -80,11 +80,12 @@ public class SocketEventHandler {
        ========================== MANEJO DE EVENTOS ============================
        ========================================================================= */
 
-    private void handleCreateRoom(SocketIOClient client, String roomName, AckRequest ack) {
+    private void handleCreateRoom(SocketIOClient client, CreateRoomRequest createRoomRequest, AckRequest ack) {
+        String roomName = createRoomRequest.getRoomName();
         System.out.println(">>> createRoom: " + roomName);
 
         if (rooms.containsKey(roomName)) {
-            client.sendEvent("createRoomResponse", Map.of("success", false, "message", "La sala ya existe"));
+            ack.sendAckData(Map.of("success", true, "message", "Sala creada"));
             return;
         }
 
@@ -93,7 +94,7 @@ public class SocketEventHandler {
         rooms.put(roomName, newRoom);
 
         client.sendEvent("roomResponse", Map.of("success", true, "message", "Sala creada"));
-        broadcastRooms();
+        handleGetRooms(client, createRoomRequest);
     }
 
     private void handleGetRooms(SocketIOClient client, PaginationRequest paginationRequest) {
