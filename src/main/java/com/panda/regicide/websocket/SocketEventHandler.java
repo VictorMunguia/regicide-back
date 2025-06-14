@@ -85,8 +85,7 @@ public class SocketEventHandler {
         System.out.println(">>> createRoom: " + roomName);
 
         if (rooms.containsKey(roomName)) {
-            logger.info("Ejecutando el ack");
-            ack.sendAckData(Map.of("success", true, "message", "Sala creada"));
+            ack.sendAckData(Map.of("success", false, "message", "Esta sala ya existe: " + roomName));
             return;
         }
 
@@ -94,6 +93,7 @@ public class SocketEventHandler {
         newRoom.setMaxPlayerNumber(5);//  by default for now, front end will send this info later
         rooms.put(roomName, newRoom);
 
+        ack.sendAckData(Map.of("success", true, "message", "La sala ha sido creada: " + roomName));
         client.sendEvent("roomResponse", Map.of("success", true, "message", "Sala creada"));
         handleGetRooms(client, createRoomRequest);
     }
