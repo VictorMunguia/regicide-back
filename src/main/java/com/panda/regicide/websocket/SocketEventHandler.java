@@ -134,15 +134,15 @@ public class SocketEventHandler {
 
         Room room = rooms.get(roomName);
         if (room == null) {
-            client.sendEvent("joinRoomResponse", responseObj(false, "Sala no encontrada"));
+            ack.sendAckData(Map.of("success", false, "message", "Sala no encontrada"));
             return;
         }
         if (room.getPlayers().size() >= 6) {
-            client.sendEvent("joinRoomResponse", responseObj(false, "Sala llena"));
+            ack.sendAckData(Map.of("success", false, "message", "Sala llena"));
             return;
         }
         if (room.isGameStarted()) {
-            client.sendEvent("joinRoomResponse", responseObj(false, "Partida en curso"));
+            ack.sendAckData(Map.of("success", false, "message", "Partida en curso"));
             return;
         }
 
