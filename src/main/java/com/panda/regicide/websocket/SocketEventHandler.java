@@ -47,11 +47,11 @@ public class SocketEventHandler {
                 // Si la room queda vacía, se borra
                 if (room.getPlayers().isEmpty()) {
                     rooms.remove(roomName);
+                    broadcastRooms();
                 } else {
                     broadcastPlayers(roomName);
                 }
             });
-            broadcastRooms();
         });
 
         // Registramos los listeners para los eventos igual que en Node:
@@ -120,7 +120,7 @@ public class SocketEventHandler {
         PaginationResponse response = new PaginationResponse(roomsResponse, String.valueOf(totalRooms),
                 String.valueOf(totalPages), String.valueOf(page));
         logger.info("updateRooms response: " + JsonUtils.convertObjectToString(response));
-        client.sendEvent("updateRooms", response);
+        server.getBroadcastOperations().sendEvent("updateRooms", response);
     }
 
     private List<String> paginateList(List<String> list, int page, int size) {
@@ -152,12 +152,12 @@ public class SocketEventHandler {
         room.addPlayer(newPlayer);
 
         // Respuesta al cliente
-        Map<String,Object> successData = responseObj(true, "Unido a la sala");
-        successData.put("playerId", playerId);
-        successData.put("roomName", roomName);
-        client.sendEvent("roomResponse", successData);
-
-        broadcastPlayers(roomName);
+//        Map<String,Object> successData = responseObj(true, "Unido a la sala");
+//        successData.put("playerId", playerId);
+//        successData.put("roomName", roomName);
+//        client.sendEvent("roomResponse", successData);
+//
+//        broadcastPlayers(roomName);
     }
 
     private void handleStartGame(SocketIOClient client, String roomName, AckRequest ack) {
